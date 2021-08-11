@@ -42,7 +42,7 @@
   },
   "dependencies": {
     "@makerdao/currency": "^0.9.9",
-    "@openzeppelin/contracts": "^3.3.0",
+    "@openzeppelin/contracts": "^4.1.0",
     "@truffle/hdwallet-provider": "^1.2.1",
     "dotenv": "^8.2.0",
     "lodash": "^4.17.21",
