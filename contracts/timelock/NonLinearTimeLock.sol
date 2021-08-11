@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.6.0 <0.8.0;
+pragma solidity ^0.8.0;
 
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {OnApprove} from "../token/ERC20OnApprove.sol";
+import { OnApprove } from "../token/ERC20OnApprove.sol";
 
-import {DSMath} from "../lib/ds-hub.sol";
+import { DSMath } from "../lib/ds-hub.sol";
 
 /**
  * @dev before each step end time, beneficiary can claim tokens.
@@ -34,7 +34,7 @@ contract NonLinearTimeLock is DSMath, Ownable, OnApprove {
 
     uint256 public nSteps;
     uint256[] public stepEndTimes;
-    uint256[] public stepRatio;
+    uint256[] public accStepRatio;
 
     event Claimed(address indexed beneficiary, uint256 amount);
 
@@ -52,16 +52,15 @@ contract NonLinearTimeLock is DSMath, Ownable, OnApprove {
         uint256[] memory stepRatio_
     ) external onlyOwner {
         require(!initialized, "no-re-init");
-        require(
-            stepEndTimes_.length == stepRatio_.length,
-            "invalid-array-length"
-        );
+        require(stepEndTimes_.length == stepRatio_.length, "invalid-array-length");
 
         uint256 n = stepEndTimes_.length;
 
+        uint256[] memory accStepRatio_ = new uint256[](n);
         uint256 accRatio;
         for (uint256 i = 0; i < n; i++) {
             accRatio += stepRatio_[i];
+            accStepRatio_[i] = accRatio;
         }
         require(accRatio == WAD, "invalid-acc-ratio");
 
@@ -76,7 +75,7 @@ contract NonLinearTimeLock is DSMath, Ownable, OnApprove {
         endTime = stepEndTimes_[n - 1];
 
         stepEndTimes = stepEndTimes_;
-        stepRatio = stepRatio_;
+        accStepRatio = accStepRatio_;
 
         nSteps = stepRatio_.length;
     }
@@ -140,11 +139,7 @@ contract NonLinearTimeLock is DSMath, Ownable, OnApprove {
         if (timestamp >= endTime) return initialBalance.sub(claimed);
 
         uint256 step = getStepAt(timestamp);
-        uint256 accRatio = 0;
-
-        for (uint256 i = 0; i <= step; i++) {
-            accRatio += stepRatio[i];
-        }
+        uint256 accRatio = accStepRatio[step];
 
         return wmul(initialBalance, accRatio).sub(claimed);
     }
@@ -161,23 +156,27 @@ contract NonLinearTimeLock is DSMath, Ownable, OnApprove {
      */
     function getStepAt(uint256 timestamp) public view returns (uint256) {
         require(timestamp >= startTime, "not-started");
-        if (timestamp >= stepEndTimes[nSteps - 1]) {
-            return nSteps - 1;
+        uint256 n = nSteps;
+        if (timestamp >= stepEndTimes[n - 1]) {
+            return n - 1;
+        }
+        if (timestamp <= stepEndTimes[0]) {
+            return 0;
         }
 
-        uint256 lo = 0;
-        uint256 hi = nSteps - 1;
+        uint256 lo = 1;
+        uint256 hi = n - 1;
         uint256 md;
 
         while (lo < hi) {
             md = (hi + lo + 1) / 2;
-            if (timestamp <= stepEndTimes[md]) {
+            if (timestamp < stepEndTimes[md - 1]) {
                 hi = md - 1;
             } else {
                 lo = md;
             }
         }
 
-        return md;
+        return lo;
     }
 }

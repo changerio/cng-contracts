@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.6.0 <0.8.0;
+pragma solidity ^0.8.0;
 
 interface DSAuthority {
     function canCall(
@@ -39,16 +39,12 @@ contract DSAuth is DSAuthEvents {
         _;
     }
 
-    function isAuthorized(address src, bytes4 sig)
-        internal
-        view
-        returns (bool)
-    {
+    function isAuthorized(address src, bytes4 sig) internal view returns (bool) {
         if (src == address(this)) {
             return true;
         } else if (src == owner) {
             return true;
-        } else if (authority == DSAuthority(0)) {
+        } else if (authority == DSAuthority(address(0))) {
             return false;
         } else {
             return authority.canCall(src, address(this), sig);

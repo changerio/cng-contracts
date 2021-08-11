@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.6.0 <0.8.0;
+pragma solidity ^0.8.0;
 
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {TimeLock} from "../timelock/TimeLock.sol";
-import {OnApprove} from "../token/ERC20OnApprove.sol";
+import { TimeLock } from "../timelock/TimeLock.sol";
+import { OnApprove } from "../token/ERC20OnApprove.sol";
 
-import {DSMath} from "../lib/ds-hub.sol";
+import { DSMath } from "../lib/ds-hub.sol";
 
 /**
  * @notice this contract is deprecated. NonLinearTimeLockSwapper will be used.
@@ -110,15 +110,9 @@ contract Swapper is Ownable, DSMath, OnApprove {
         require(isRegistered(sourceToken), "unregistered-source-token");
         require(amount > 0, "invalid-amount");
 
-        require(
-            address(locks[sourceToken][beneficiary]) == address(0),
-            "redundent-deposit"
-        );
+        require(address(locks[sourceToken][beneficiary]) == address(0), "redundent-deposit");
 
-        require(
-            msg.sender == address(sourceToken) || msg.sender == beneficiary,
-            "no-auth"
-        );
+        require(msg.sender == address(sourceToken) || msg.sender == beneficiary, "no-auth");
 
         Data storage data = datas[sourceToken];
 
@@ -127,24 +121,14 @@ contract Swapper is Ownable, DSMath, OnApprove {
         locks[sourceToken][beneficiary] = lock;
 
         // get source token
-        IERC20(sourceToken).safeTransferFrom(
-            beneficiary,
-            address(this),
-            amount
-        );
+        IERC20(sourceToken).safeTransferFrom(beneficiary, address(this), amount);
 
         uint256 tokenAmount = wmul(amount, data.rate);
 
         token.safeTransferFrom(tokenWallet, address(lock), tokenAmount);
         lock.init(data.startTime, data.endTime, data.nSteps);
 
-        emit Deposited(
-            sourceToken,
-            beneficiary,
-            address(lock),
-            amount,
-            tokenAmount
-        );
+        emit Deposited(sourceToken, beneficiary, address(lock), amount, tokenAmount);
     }
 
     //////////////////////////////////////////
@@ -154,34 +138,17 @@ contract Swapper is Ownable, DSMath, OnApprove {
     //////////////////////////////////////////
 
     function claim(address sourceToken) external {
-        require(
-            address(locks[sourceToken][msg.sender]) != address(0),
-            "no-deposit"
-        );
+        require(address(locks[sourceToken][msg.sender]) != address(0), "no-deposit");
         return locks[sourceToken][msg.sender].claim();
     }
 
-    function initialBalance(address sourceToken, address beneficiary)
-        external
-        view
-        returns (uint256)
-    {
-        require(
-            address(locks[sourceToken][beneficiary]) != address(0),
-            "no-deposit"
-        );
+    function initialBalance(address sourceToken, address beneficiary) external view returns (uint256) {
+        require(address(locks[sourceToken][beneficiary]) != address(0), "no-deposit");
         return locks[sourceToken][beneficiary].initialBalance();
     }
 
-    function claimable(address sourceToken, address beneficiary)
-        external
-        view
-        returns (uint256)
-    {
-        require(
-            address(locks[sourceToken][beneficiary]) != address(0),
-            "no-deposit"
-        );
+    function claimable(address sourceToken, address beneficiary) external view returns (uint256) {
+        require(address(locks[sourceToken][beneficiary]) != address(0), "no-deposit");
         return locks[sourceToken][beneficiary].claimable();
     }
 
@@ -190,22 +157,12 @@ contract Swapper is Ownable, DSMath, OnApprove {
         address beneficiary,
         uint256 timestamp
     ) external view returns (uint256) {
-        require(
-            address(locks[sourceToken][beneficiary]) != address(0),
-            "no-deposit"
-        );
+        require(address(locks[sourceToken][beneficiary]) != address(0), "no-deposit");
         return locks[sourceToken][beneficiary].claimableAt(timestamp);
     }
 
-    function claimed(address sourceToken, address beneficiary)
-        external
-        view
-        returns (uint256)
-    {
-        require(
-            address(locks[sourceToken][beneficiary]) != address(0),
-            "no-deposit"
-        );
+    function claimed(address sourceToken, address beneficiary) external view returns (uint256) {
+        require(address(locks[sourceToken][beneficiary]) != address(0), "no-deposit");
         return locks[sourceToken][beneficiary].claimed();
     }
 }

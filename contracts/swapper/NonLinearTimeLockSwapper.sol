@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.6.0 <0.8.0;
+pragma solidity ^0.8.0;
 
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {NonLinearTimeLock} from "../timelock/NonLinearTimeLock.sol";
-import {OnApprove} from "../token/ERC20OnApprove.sol";
-import {Token} from "../token/Token.sol";
+import { NonLinearTimeLock } from "../timelock/NonLinearTimeLock.sol";
+import { OnApprove } from "../token/ERC20OnApprove.sol";
+import { Token } from "../token/Token.sol";
 
-import {DSMath} from "../lib/ds-hub.sol";
+import { DSMath } from "../lib/ds-hub.sol";
 
 /**
  * @dev `deposit` source token and `claim` target token from NonLinearTimeLock contract.
@@ -63,6 +63,16 @@ contract NonLinearTimeLockSwapper is Ownable, DSMath, OnApprove {
 
     //////////////////////////////////////////
     //
+    // token wallet
+    //
+    //////////////////////////////////////////
+
+    function setTokenWallet(address tokenWallet_) external onlyOwner onlyValidAddress(tokenWallet_) {
+        tokenWallet = tokenWallet_;
+    }
+
+    //////////////////////////////////////////
+    //
     // NonLinearTimeLock data
     //
     //////////////////////////////////////////
@@ -78,16 +88,13 @@ contract NonLinearTimeLockSwapper is Ownable, DSMath, OnApprove {
 
         require(rate > 0, "invalid-rate");
 
-        require(
-            stepEndTimes.length == stepRatio.length,
-            "invalid-array-length"
-        );
+        require(stepEndTimes.length == stepRatio.length, "invalid-array-length");
 
         uint256 n = stepEndTimes.length;
 
         uint256 accRatio;
         for (uint256 i = 0; i < n; i++) {
-            accRatio += stepRatio[i];
+            accRatio = add(accRatio, stepRatio[i]);
         }
         require(accRatio == WAD, "invalid-acc-ratio");
 
@@ -105,6 +112,14 @@ contract NonLinearTimeLockSwapper is Ownable, DSMath, OnApprove {
 
     function isRegistered(address sourceToken) public view returns (bool) {
         return datas[sourceToken].startTime > 0;
+    }
+
+    function getStepEndTimes(address sourceToken) external view returns (uint256[] memory) {
+        return datas[sourceToken].stepEndTimes;
+    }
+
+    function getStepRatio(address sourceToken) external view returns (uint256[] memory) {
+        return datas[sourceToken].stepRatio;
     }
 
     //////////////////////////////////////////
@@ -136,39 +151,25 @@ contract NonLinearTimeLockSwapper is Ownable, DSMath, OnApprove {
         require(isRegistered(sourceToken), "unregistered-source-token");
         require(amount > 0, "invalid-amount");
 
-        require(
-            msg.sender == address(sourceToken) || msg.sender == beneficiary,
-            "no-auth"
-        );
+        require(msg.sender == address(sourceToken) || msg.sender == beneficiary, "no-auth");
 
         Data storage data = datas[sourceToken];
         uint256 tokenAmount = wmul(amount, data.rate);
 
         // process first deposit
         if (address(locks[sourceToken][beneficiary]) == address(0)) {
-            NonLinearTimeLock lock =
-                new NonLinearTimeLock(ERC20(address(token)), beneficiary);
+            NonLinearTimeLock lock = new NonLinearTimeLock(ERC20(address(token)), beneficiary);
 
             locks[sourceToken][beneficiary] = lock;
 
             // get source token
-            IERC20(sourceToken).safeTransferFrom(
-                beneficiary,
-                address(this),
-                amount
-            );
+            IERC20(sourceToken).safeTransferFrom(beneficiary, address(this), amount);
 
             // transfer target token and initialize lock
             token.safeTransferFrom(tokenWallet, address(lock), tokenAmount);
             lock.init(data.startTime, data.stepEndTimes, data.stepRatio);
 
-            emit Deposited(
-                sourceToken,
-                beneficiary,
-                address(lock),
-                amount,
-                tokenAmount
-            );
+            emit Deposited(sourceToken, beneficiary, address(lock), amount, tokenAmount);
             return;
         }
 
@@ -176,11 +177,7 @@ contract NonLinearTimeLockSwapper is Ownable, DSMath, OnApprove {
         NonLinearTimeLock lock = locks[sourceToken][beneficiary];
 
         // get source token
-        IERC20(sourceToken).safeTransferFrom(
-            beneficiary,
-            address(this),
-            amount
-        );
+        IERC20(sourceToken).safeTransferFrom(beneficiary, address(this), amount);
 
         // get target token from token wallet
         token.safeTransferFrom(tokenWallet, address(this), tokenAmount);
@@ -189,13 +186,7 @@ contract NonLinearTimeLockSwapper is Ownable, DSMath, OnApprove {
         bytes memory d;
         Token(address(token)).approveAndCall(address(lock), tokenAmount, d);
 
-        emit Deposited(
-            sourceToken,
-            beneficiary,
-            address(lock),
-            amount,
-            tokenAmount
-        );
+        emit Deposited(sourceToken, beneficiary, address(lock), amount, tokenAmount);
     }
 
     //////////////////////////////////////////
@@ -205,18 +196,12 @@ contract NonLinearTimeLockSwapper is Ownable, DSMath, OnApprove {
     //////////////////////////////////////////
 
     modifier onlyDeposit(address sourceToken, address account) {
-        require(
-            address(locks[sourceToken][account]) != address(0),
-            "no-deposit"
-        );
+        require(address(locks[sourceToken][account]) != address(0), "no-deposit");
 
         _;
     }
 
-    function claim(address sourceToken)
-        public
-        onlyDeposit(sourceToken, msg.sender)
-    {
+    function claim(address sourceToken) public onlyDeposit(sourceToken, msg.sender) {
         locks[sourceToken][msg.sender].claim();
     }
 

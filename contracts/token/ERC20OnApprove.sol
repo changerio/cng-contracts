@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.6.0 <0.8.0;
+pragma solidity ^0.8.0; // solhint-disable-line compiler-version
 
-import {ERC165} from "@openzeppelin/contracts/introspection/ERC165.sol";
-import {
-    ERC165Checker
-} from "@openzeppelin/contracts/introspection/ERC165Checker.sol";
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
+import { ERC165Storage } from "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-abstract contract OnApprove is ERC165 {
-    constructor() public {
+abstract contract OnApprove is ERC165Storage {
+    constructor() {
         _registerInterface(OnApprove(this).onApprove.selector);
     }
 
@@ -27,7 +26,7 @@ abstract contract ERC20OnApprove is ERC20 {
         uint256 amount,
         bytes calldata data
     ) external returns (bool) {
-        require(approve(spender, amount));
+        require(approve(spender, amount), "ERC20OnApprove: fail to approve");
         _callOnApprove(msg.sender, spender, amount, data);
         return true;
     }
@@ -45,16 +44,9 @@ abstract contract ERC20OnApprove is ERC20 {
             "ERC20OnApprove: spender doesn't support onApprove"
         );
 
-        (bool ok, bytes memory res) =
-            spender.call(
-                abi.encodeWithSelector(
-                    onApproveSelector,
-                    owner,
-                    spender,
-                    amount,
-                    data
-                )
-            );
+        (bool ok, bytes memory res) = spender.call(
+            abi.encodeWithSelector(onApproveSelector, owner, spender, amount, data)
+        );
 
         // check if low-level call reverted or not
         require(ok, string(res));

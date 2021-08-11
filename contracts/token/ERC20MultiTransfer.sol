@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.6.0 <0.8.0;
+pragma solidity ^0.8.0;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 contract ERC20MultiTransfer {
     using SafeERC20 for IERC20;
@@ -18,13 +18,8 @@ contract ERC20MultiTransfer {
         uint256 amount,
         bool allowDup
     ) public {
-        require(
-            allowDup || transferAmount[token][account] == 0,
-            "no-dup-transfer"
-        );
-        transferAmount[token][account] = transferAmount[token][account].add(
-            amount
-        );
+        require(allowDup || transferAmount[token][account] == 0, "no-dup-transfer");
+        transferAmount[token][account] = transferAmount[token][account].add(amount);
         token.safeTransferFrom(msg.sender, account, amount);
     }
 

@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.6.0 <0.8.0;
+pragma solidity ^0.8.0;
 
-import {OnApprove} from "../token/ERC20OnApprove.sol";
-import {Token} from "../token/Token.sol";
+import { OnApprove } from "../token/ERC20OnApprove.sol";
+import { Token } from "../token/Token.sol";
 
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract TokenReceiverMock is OnApprove {
     IERC20 public token;
@@ -25,6 +25,8 @@ contract TokenReceiverMock is OnApprove {
         if (msg.sender != address(token)) return false;
 
         SafeERC20.safeTransferFrom(token, owner, address(this), amount);
+
+        data;
 
         return true;
     }
