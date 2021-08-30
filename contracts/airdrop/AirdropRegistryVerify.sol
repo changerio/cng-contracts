@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.0; // solhint-disable-line compiler-version
+pragma solidity 0.8.5; // solhint-disable-line compiler-version
 
-import "hardhat/console.sol";
 import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 import { StorageSlotOwnable } from "../lib/StorageSlotOwnable.sol";

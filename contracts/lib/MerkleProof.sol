@@ -1,6 +1,6 @@
 // https://github.com/ameensol/merkle-tree-solidity/blob/master/src/MerkleProof.sol
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0; // solhint-disable-line compiler-version
+pragma solidity 0.8.5; // solhint-disable-line compiler-version
 
 library MerkleProof {
     function checkProof(

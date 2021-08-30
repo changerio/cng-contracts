@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.0;
+pragma solidity 0.8.5; // solhint-disable-line compiler-version
 
 interface DSAuthority {
     function canCall(
@@ -34,7 +34,7 @@ contract DSAuth is DSAuthEvents {
         emit LogSetAuthority(address(authority));
     }
 
-    modifier auth {
+    modifier auth() {
         require(isAuthorized(msg.sender, msg.sig), "ds-auth-unauthorized");
         _;
     }
@@ -62,7 +62,7 @@ contract DSNote {
         bytes fax
     ) anonymous;
 
-    modifier note {
+    modifier note() {
         bytes32 foo;
         bytes32 bar;
         uint256 wad;

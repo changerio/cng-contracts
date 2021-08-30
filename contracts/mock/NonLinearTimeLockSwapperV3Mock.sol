@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.0;
+pragma solidity 0.8.5; // solhint-disable-line compiler-version
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -30,8 +30,10 @@ contract NonLinearTimeLockSwapperV3Mock is NonLinearTimeLockSwapperV2Storage, St
     }
 
     function _initializeKernel(bytes memory data) internal virtual override {
-        (address owner_, address token_, address tokenWallet_, uint256 foo_) =
-            abi.decode(data, (address, address, address, uint256));
+        (address owner_, address token_, address tokenWallet_, uint256 foo_) = abi.decode(
+            data,
+            (address, address, address, uint256)
+        );
 
         _initializeV3(owner_, token_, tokenWallet_, foo_);
     }
