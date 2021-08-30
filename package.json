@@ -35,14 +35,15 @@
     "ethereum-waffle": "^3.2.1",
     "ethers": "^5.0.24",
     "ganache-cli": "^6.12.1",
-    "prettier": "^2.2.1",
-    "prettier-plugin-solidity": "^1.0.0-beta.2",
+    "prettier": "^2.3.2",
+    "prettier-plugin-solidity": "^1.0.0-beta.17",
+    "solhint": "^3.3.6",
     "truffle": "^5.1.57",
     "verify-on-etherscan": "^1.2.1"
   },
   "dependencies": {
     "@makerdao/currency": "^0.9.9",
-    "@openzeppelin/contracts": "^4.1.0",
+    "@openzeppelin/contracts": "4.1.0",
     "@truffle/hdwallet-provider": "^1.2.1",
     "dotenv": "^8.2.0",
     "lodash": "^4.17.21",
