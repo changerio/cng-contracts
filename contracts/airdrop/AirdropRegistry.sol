@@ -11,8 +11,6 @@ import { OnApprove } from "../token/ERC20OnApprove.sol";
 import { AirdropRegistryStorage } from "./AirdropRegistryStorage.sol";
 import { AirdropRegistryVerify } from "./AirdropRegistryVerify.sol";
 
-// import { AirdropRegistryMerkleProof } from "./AirdropRegistryMerkleProof.sol";
-
 contract AirdropRegistry is AirdropRegistryStorage, StorageSlotOwnable, OnApprove, AirdropRegistryVerify {
     using SafeERC20 for IERC20;
 
