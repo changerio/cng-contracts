@@ -42,6 +42,7 @@ contract NonLinearTimeLockSwapperV2 is NonLinearTimeLockSwapperV2Storage, Storag
     event Undeposited(address indexed sourceToken, address indexed beneficiary, uint256 amount, address receiver);
 
     event Claimed(address indexed sourceToken, address indexed beneficiary, uint256 targetTokenAmount);
+    event TokenWalletChanged(address indexed previousWallet, address newWallet);
 
     //////////////////////////////////////////
     //
@@ -63,9 +64,9 @@ contract NonLinearTimeLockSwapperV2 is NonLinearTimeLockSwapperV2Storage, Storag
         address token_,
         address tokenWallet_
     ) private onlyValidAddress(owner_) onlyValidAddress(token_) onlyValidAddress(tokenWallet_) {
-        _setOwner(owner_);
-        token = IERC20(token_);
-        tokenWallet = tokenWallet_;
+        if (owner() == address(0)) _setOwner(owner_);
+        if (address(token) == address(0)) token = IERC20(token_);
+        if (tokenWallet == address(0)) tokenWallet = tokenWallet_;
 
         _registerInterface(OnApprove(this).onApprove.selector);
     }
@@ -77,7 +78,9 @@ contract NonLinearTimeLockSwapperV2 is NonLinearTimeLockSwapperV2Storage, Storag
     //////////////////////////////////////////
 
     function setTokenWallet(address tokenWallet_) external onlyOwner onlyValidAddress(tokenWallet_) {
+        address previousWallet = tokenWallet;
         tokenWallet = tokenWallet_;
+        emit TokenWalletChanged(previousWallet, tokenWallet_);
     }
 
     //////////////////////////////////////////
@@ -160,6 +163,12 @@ contract NonLinearTimeLockSwapperV2 is NonLinearTimeLockSwapperV2Storage, Storag
 
     function stopMigration() external onlyOwner {
         migrationStopped = true;
+    }
+
+    function sendBackToken() external onlyOwner {
+        IERC20 _token = token;
+        uint256 balance = _token.balanceOf(address(this));
+        _token.transfer(tokenWallet, balance);
     }
 
     //////////////////////////////////////////
@@ -256,11 +265,8 @@ contract NonLinearTimeLockSwapperV2 is NonLinearTimeLockSwapperV2Storage, Storag
         // update initial balance
         depositAmounts[sourceToken][beneficiary] = depositAmounts[sourceToken][beneficiary].add(sourceTokenAmount);
 
-        // get source token
+        // get source token from beneficiary
         IERC20(sourceToken).safeTransferFrom(beneficiary, address(this), sourceTokenAmount);
-
-        // get target token from token wallet
-        token.safeTransferFrom(tokenWallet, address(this), targetTokenAmount);
 
         emit Deposited(sourceToken, beneficiary, sourceTokenAmount, targetTokenAmount);
     }
