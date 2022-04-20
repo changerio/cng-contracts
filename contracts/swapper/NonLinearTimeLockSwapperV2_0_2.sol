@@ -47,6 +47,7 @@ contract NonLinearTimeLockSwapperV2_0_2 is
     event Undeposited(address indexed sourceToken, address indexed beneficiary, uint256 amount, address receiver);
 
     event Claimed(address indexed sourceToken, address indexed beneficiary, uint256 targetTokenAmount);
+    event TokenWalletChanged(address indexed previousWallet, address newWallet);
 
     //////////////////////////////////////////
     //
@@ -82,7 +83,9 @@ contract NonLinearTimeLockSwapperV2_0_2 is
     //////////////////////////////////////////
 
     function setTokenWallet(address tokenWallet_) external onlyOwner onlyValidAddress(tokenWallet_) {
+        address previousWallet = tokenWallet;
         tokenWallet = tokenWallet_;
+        emit TokenWalletChanged(previousWallet, tokenWallet_);
     }
 
     //////////////////////////////////////////
