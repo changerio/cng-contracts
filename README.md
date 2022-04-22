@@ -22,6 +22,7 @@
 | `NonLinearTimeLockSwapperV2@2.0.0` | [`0x557DE75A27025815dB74E16EA2B58eb7C2a1360f`](https://etherscan.io/address/0x557DE75A27025815dB74E16EA2B58eb7C2a1360f) | NonLinearTimeLockSwapperV2 logic (2.0.0) |
 | `NonLinearTimeLockSwapperV2@2.0.1` | [`0x6971C1d22cCD76D3ca706523f3685E20faef9071`](https://etherscan.io/address/0x6971C1d22cCD76D3ca706523f3685E20faef9071) | NonLinearTimeLockSwapperV2 logic (2.0.1) |
 | `NonLinearTimeLockSwapperV2@2.0.2` | [`0x83277787529dd950eC301fF700864971f1Dbb214`](https://etherscan.io/address/0x83277787529dd950eC301fF700864971f1Dbb214) | NonLinearTimeLockSwapperV2 logic (2.0.2) |
+| `NonLinearTimeLockSwapperV2@2.0.3` | [`0xc816F766300A5DC86025eec1DA937061f0BC0815`](https://etherscan.io/address/0xc816F766300A5DC86025eec1DA937061f0BC0815) | NonLinearTimeLockSwapperV2 logic (2.0.3) |
 
 ### Airdrop
 
