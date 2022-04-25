@@ -9,7 +9,7 @@ module.exports = {
     web3: true,
     artifacts: true,
   },
-  extends: ["standard", "plugin:prettier/recommended"],
+  extends: ["standard", "plugin:prettier/recommended", "prettier"],
   parserOptions: {
     ecmaVersion: 12,
   },
