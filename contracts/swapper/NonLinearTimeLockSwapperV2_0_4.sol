@@ -11,9 +11,14 @@ import { DSMath } from "../lib/ds-hub.sol";
 import { StorageSlotOwnable } from "../lib/StorageSlotOwnable.sol";
 import { OnApprove } from "../token/ERC20OnApprove.sol";
 
-import { NonLinearTimeLockSwapperV2Storage } from "./NonLinearTimeLockSwapperV2Storage.sol";
+import { NonLinearTimeLockSwapperV2_0_4Storage } from "./NonLinearTimeLockSwapperV2_0_4Storage.sol";
 
-contract NonLinearTimeLockSwapperV2 is NonLinearTimeLockSwapperV2Storage, StorageSlotOwnable, DSMath, OnApprove {
+contract NonLinearTimeLockSwapperV2_0_4 is
+    NonLinearTimeLockSwapperV2_0_4Storage,
+    StorageSlotOwnable,
+    DSMath,
+    OnApprove
+{
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
@@ -64,18 +69,6 @@ contract NonLinearTimeLockSwapperV2 is NonLinearTimeLockSwapperV2Storage, Storag
         if (tokenWallet == address(0)) tokenWallet = tokenWallet_;
 
         _registerInterface(OnApprove(this).onApprove.selector);
-    }
-
-    //////////////////////////////////////////
-    //
-    // token wallet
-    //
-    //////////////////////////////////////////
-
-    function setTokenWallet(address tokenWallet_) external onlyOwner onlyValidAddress(tokenWallet_) {
-        address previousWallet = tokenWallet;
-        tokenWallet = tokenWallet_;
-        emit TokenWalletChanged(previousWallet, tokenWallet_);
     }
 
     //////////////////////////////////////////

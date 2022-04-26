@@ -6,7 +6,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { Kernel } from "../proxy/Kernel.sol";
 
-abstract contract NonLinearTimeLockSwapperV2Storage is Kernel {
+abstract contract NonLinearTimeLockSwapperV2_0_4Storage is Kernel {
     // swap data for each source token, i.e., teamCFX, ecoCFX, backCFX
     struct SourceTokeData {
         uint128 rate; // convertion rate from source token to target token
