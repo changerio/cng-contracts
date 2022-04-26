@@ -73,18 +73,6 @@ contract NonLinearTimeLockSwapperV2_0_4 is
 
     //////////////////////////////////////////
     //
-    // token wallet
-    //
-    //////////////////////////////////////////
-
-    function setTokenWallet(address tokenWallet_) external onlyOwner onlyValidAddress(tokenWallet_) {
-        address previousWallet = tokenWallet;
-        tokenWallet = tokenWallet_;
-        emit TokenWalletChanged(previousWallet, tokenWallet_);
-    }
-
-    //////////////////////////////////////////
-    //
     // register source token
     //
     //////////////////////////////////////////
