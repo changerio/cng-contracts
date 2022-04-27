@@ -46,7 +46,7 @@ contract NonLinearTimeLockSwapperV2 is NonLinearTimeLockSwapperV2Storage, Storag
     //////////////////////////////////////////
 
     function implementationVersion() public view virtual override returns (string memory) {
-        return "2.0.4";
+        return "2.0.5";
     }
 
     function _initializeKernel(bytes memory data) internal override {
@@ -64,18 +64,6 @@ contract NonLinearTimeLockSwapperV2 is NonLinearTimeLockSwapperV2Storage, Storag
         if (tokenWallet == address(0)) tokenWallet = tokenWallet_;
 
         _registerInterface(OnApprove(this).onApprove.selector);
-    }
-
-    //////////////////////////////////////////
-    //
-    // token wallet
-    //
-    //////////////////////////////////////////
-
-    function setTokenWallet(address tokenWallet_) external onlyOwner onlyValidAddress(tokenWallet_) {
-        address previousWallet = tokenWallet;
-        tokenWallet = tokenWallet_;
-        emit TokenWalletChanged(previousWallet, tokenWallet_);
     }
 
     //////////////////////////////////////////
