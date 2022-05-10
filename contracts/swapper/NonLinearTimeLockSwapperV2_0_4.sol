@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: MIT
+// THIS FILE IS ONLY TO ARCHIVE 0xb116ff33F48a6f45fb4A5d7413de433fDb67C399
+// SEE NonLinearTimeLockSwapperV2.sol
 
 pragma solidity 0.8.5; // solhint-disable-line compiler-version
 
@@ -14,11 +16,11 @@ import { OnApprove } from "../token/ERC20OnApprove.sol";
 import { NonLinearTimeLockSwapperV2_0_4Storage } from "./NonLinearTimeLockSwapperV2_0_4Storage.sol";
 
 contract NonLinearTimeLockSwapperV2_0_4 is
-    NonLinearTimeLockSwapperV2_0_4Storage, 
-    StorageSlotOwnable, 
-    DSMath, 
-    OnApprove 
- {
+    NonLinearTimeLockSwapperV2_0_4Storage,
+    StorageSlotOwnable,
+    DSMath,
+    OnApprove
+{
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 

@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: MIT
+// THIS FILE IS ONLY TO ARCHIVE 0x83277787529dd950eC301fF700864971f1Dbb214
+// SEE NonLinearTimeLockSwapperV2.sol
 
 pragma solidity 0.8.5; // solhint-disable-line compiler-version
 
@@ -11,9 +13,14 @@ import { DSMath } from "../lib/ds-hub.sol";
 import { StorageSlotOwnable } from "../lib/StorageSlotOwnable.sol";
 import { OnApprove } from "../token/ERC20OnApprove.sol";
 
-import { NonLinearTimeLockSwapperV2Storage } from "./NonLinearTimeLockSwapperV2Storage.sol";
+import { NonLinearTimeLockSwapperV2_0_0___2_0_2Storage } from "./NonLinearTimeLockSwapperV2_0_0___2_0_2Storage.sol";
 
-contract NonLinearTimeLockSwapperV2 is NonLinearTimeLockSwapperV2Storage, StorageSlotOwnable, DSMath, OnApprove {
+contract NonLinearTimeLockSwapperV2_0_2 is
+    NonLinearTimeLockSwapperV2_0_0___2_0_2Storage,
+    StorageSlotOwnable,
+    DSMath,
+    OnApprove
+{
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
@@ -27,6 +34,11 @@ contract NonLinearTimeLockSwapperV2 is NonLinearTimeLockSwapperV2Storage, Storag
         _;
     }
 
+    modifier onlyMigrationNotStopped() {
+        require(!migrationStopped, "migration-stopped");
+        _;
+    }
+
     event Deposited(
         address indexed sourceToken,
         address indexed beneficiary,
@@ -37,7 +49,6 @@ contract NonLinearTimeLockSwapperV2 is NonLinearTimeLockSwapperV2Storage, Storag
     event Undeposited(address indexed sourceToken, address indexed beneficiary, uint256 amount, address receiver);
 
     event Claimed(address indexed sourceToken, address indexed beneficiary, uint256 targetTokenAmount);
-    event TokenWalletChanged(address indexed previousWallet, address newWallet);
 
     //////////////////////////////////////////
     //
@@ -46,7 +57,7 @@ contract NonLinearTimeLockSwapperV2 is NonLinearTimeLockSwapperV2Storage, Storag
     //////////////////////////////////////////
 
     function implementationVersion() public view virtual override returns (string memory) {
-        return "2.0.5";
+        return "2.0.2";
     }
 
     function _initializeKernel(bytes memory data) internal override {
@@ -59,11 +70,103 @@ contract NonLinearTimeLockSwapperV2 is NonLinearTimeLockSwapperV2Storage, Storag
         address token_,
         address tokenWallet_
     ) private onlyValidAddress(owner_) onlyValidAddress(token_) onlyValidAddress(tokenWallet_) {
-        if (owner() == address(0)) _setOwner(owner_);
-        if (address(token) == address(0)) token = IERC20(token_);
-        if (tokenWallet == address(0)) tokenWallet = tokenWallet_;
+        _setOwner(owner_);
+        token = IERC20(token_);
+        tokenWallet = tokenWallet_;
 
         _registerInterface(OnApprove(this).onApprove.selector);
+    }
+
+    //////////////////////////////////////////
+    //
+    // token wallet
+    //
+    //////////////////////////////////////////
+
+    function setTokenWallet(address tokenWallet_) external onlyOwner onlyValidAddress(tokenWallet_) {
+        tokenWallet = tokenWallet_;
+    }
+
+    //////////////////////////////////////////
+    //
+    // migation
+    //
+    //////////////////////////////////////////
+
+    /**
+     * @dev event is not fired to reduce gas cost
+     */
+    function setInitialBalances(
+        address sourceToken,
+        address[] calldata beneficiaries,
+        uint256[] calldata amounts
+    ) external onlyOwner onlyMigrationNotStopped {
+        require(beneficiaries.length == amounts.length, "invalid-length");
+        for (uint256 i = 0; i < amounts.length; i++) {
+            depositAmounts[sourceToken][beneficiaries[i]] = amounts[i];
+        }
+    }
+
+    /**
+     * @dev event is not fired to reduce gas cost
+     */
+    function setClaimedAmounts(
+        address sourceToken,
+        address[] calldata beneficiaries,
+        uint256[] calldata amounts
+    ) external onlyOwner onlyMigrationNotStopped {
+        require(beneficiaries.length == amounts.length, "invalid-length");
+        for (uint256 i = 0; i < amounts.length; i++) {
+            claimedAmounts[sourceToken][beneficiaries[i]] = amounts[i];
+        }
+    }
+
+    /**
+     * @dev undeposit and transfer source token to `receiver` if not claimed yet
+     */
+    function undeposit(
+        address sourceToken,
+        address beneficiary,
+        uint256 amount,
+        address receiver
+    ) public onlyMigrationNotStopped {
+        require(msg.sender == beneficiary || msg.sender == owner(), "no-auth");
+
+        uint256 depositAmount = depositAmounts[sourceToken][beneficiary];
+        require(depositAmount > 0, "no-deposit");
+        require(claimedAmounts[sourceToken][beneficiary] == 0, "already-claimed");
+
+        if (amount == 0) {
+            amount = depositAmount;
+        }
+
+        require(depositAmount >= amount, "insufficient-deposits");
+
+        depositAmounts[sourceToken][beneficiary] = depositAmount - amount;
+
+        IERC20(sourceToken).safeTransfer(receiver, amount);
+
+        emit Undeposited(sourceToken, beneficiary, amount, receiver);
+    }
+
+    function undeposits(
+        address[] calldata sourceToken,
+        address[] calldata beneficiary,
+        uint256[] calldata amount,
+        address[] calldata receiver
+    ) external {
+        uint256 n = sourceToken.length;
+        require(beneficiary.length == n, "invalid-length");
+        require(amount.length == n, "invalid-length");
+        require(receiver.length == n, "invalid-length");
+
+        for (uint256 i = 0; i < n; i++) {
+            undeposit(sourceToken[i], beneficiary[i], amount[i], receiver[i]);
+        }
+    }
+
+    function stopMigration() external onlyOwner {
+        migrationStopped = true;
     }
 
     //////////////////////////////////////////
@@ -160,8 +263,11 @@ contract NonLinearTimeLockSwapperV2 is NonLinearTimeLockSwapperV2Storage, Storag
         // update initial balance
         depositAmounts[sourceToken][beneficiary] = depositAmounts[sourceToken][beneficiary].add(sourceTokenAmount);
 
-        // get source token from beneficiary
+        // get source token
         IERC20(sourceToken).safeTransferFrom(beneficiary, address(this), sourceTokenAmount);
+
+        // get target token from token wallet
+        token.safeTransferFrom(tokenWallet, address(this), targetTokenAmount);
 
         emit Deposited(sourceToken, beneficiary, sourceTokenAmount, targetTokenAmount);
     }
